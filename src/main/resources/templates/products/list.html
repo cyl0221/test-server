@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<th:block th:replace="~{/layout/basic :: setContent(~{this::content})}">
+  <th:block th:fragment="content">
+    <h1 class="mt-4">products List Page
+      <a class="btn btn-outline-primary" th:href="@{/products/register}">Register</a>
+    </h1>
+    <form th:action="@{/products/list}" id="frmSearch" method="get">
+      <div class="input-group">
+        <div class="input-group-prepend" style="margin-right:10px;">
+          <select class="form-control" id="type" name="type">
+            <option th:selected="${pageRequestDTO.type == null}">선택하세요</option>
+            <option value="n" th:selected="${pageRequestDTO.type == 'n'}">제품명</option>
+            <option value="m" th:selected="${pageRequestDTO.type == 'm'}">모델명</option>
+            <option value="k" th:selected="${pageRequestDTO.type == 'k'}">제조자</option>
+            <option value="nm" th:selected="${pageRequestDTO.type == 'nm'}">제품+모델</option>
+            <option value="nmk" th:selected="${pageRequestDTO.type == 'nmk'}">제품+모델+제조자</option>
+          </select>
+        </div>
+        <input type="text" class="form-control" name="keyword" style="border-radius:5px"
+               id="keyword" th:value="${pageRequestDTO.keyword}">
+        <div class="input-group-append" style="margin-left:10px;">
+          <button class="btn btn-outline-primary btnSearch">Search</button>
+        </div>
+      </div>
+    </form>
+    <table class="table table-striped">
+      <thead>
+      <tr>
+        <th scope="col">Pno</th>
+        <th scope="col">Pname</th>
+        <th scope="col">Pmodel</th>
+        <th scope="col">Pmaker</th>
+        <th scope="col">price</th>
+        <th scope="col">Regdate</th>
+      </tr>
+      </thead>
+      <tbody>
+      <!--/*
+      th:onclick="|location.href='@{/products/read(pno=${productsDTO.pno},page=${pageResultDTO.page})}'|"
+      */-->
+      <tr th:each="productsDTO : ${pageResultDTO.dtoList}" style="cursor:pointer;"
+          th:onclick="goRead([[${productsDTO.pno}]],[[${pageResultDTO.page}]],[[${pageRequestDTO.type}]], [[${pageRequestDTO.keyword}]])"
+          onmouseover="this.style.background='#d6e6ff'"
+          onmouseout="this.style.background='white'">
+        <th scope="row">[[${productsDTO.pno}]]</th>
+        <td>[[${productsDTO.pname}]]</td>
+        <td>[[${productsDTO.pmodel}]]</td>
+        <td>[[${productsDTO.pmaker}]]</td>
+        <td>[[${productsDTO.price}]]</td>
+        <td>[[${#temporals.format(productsDTO.regDate, 'yyyy/MM/dd hh:mm')}]]</td>
+      </tr>
+      </tbody>
+    </table>
+    <ul class="pagination h-100 justify-content-center align-items-center">
+      <li class="page-item " th:if="${pageResultDTO.prev}">
+        <a class="page-link" tabindex="-1"
+           th:href="@{/products/list(page=${pageResultDTO.start-1})}">Prev</a>
+      </li>
+      <li th:each="page : ${pageResultDTO.pageList}"
+          th:class=" 'page-item ' + ${pageResultDTO.page == page?'active':''} ">
+        <a class="page-link"
+           th:href="@{/products/list(page=${page},type=${pageRequestDTO.type},keyword=${pageRequestDTO.keyword})}">[[${page}]]</a>
+      </li>
+      <li class="page-item " th:if="${pageResultDTO.next}">
+        <a class="page-link"
+           th:href="@{/products/list(page=${pageResultDTO.end+1})}">Next</a>
+      </li>
+    </ul>
+    <div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Modal title</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+          </div>
+        </div>
+      </div>
+    </div>
+    <script th:inline="javascript">
+
+      window.onload = function(){
+        var msg = [[${msg}]];
+        if(msg) {
+          const myModal = new bootstrap.Modal(document.querySelector('#myModal'),
+                          { backdrop: true });
+          document.querySelector(".modal-body").innerHTML
+            = `<p>${msg}되었습니다.</p>`
+          myModal.show()
+        }
+
+        history.replaceState({}, null, null) //(state, unused, url)
+
+        frmSearch = document.querySelector("#frmSearch")
+        btnSearch = document.querySelector(".btnSearch")
+        type = document.querySelector("#type");
+        keyword = document.querySelector("#keyword")
+
+        btnSearch.onclick = e => {
+          e.preventDefault();
+          if(!keyword.value) {
+            keyword.focus();
+            return;
+          }
+          frmSearch.submit();
+        }
+        type.onchange = () => {
+          if(type.options[0].selected) {
+            location.href = /*[[@{/products/list}]]*/'url'
+          } else {
+            keyword.disabled = false;
+            btnSearch.disabled = false;
+          }
+        }
+        const requestKeyword = /*[[${pageRequestDTO.keyword}]]*/'keyword'
+        keyword.disabled = requestKeyword?false:true;
+        btnSearch.disabled = requestKeyword?false:true;
+      }
+      function goRead(pno, page, type, keyword){
+        url = /*[[@{/products/read}]]*/'url'
+        location.href = url + `?pno=${pno}&page=${page}&type=${type}&keyword=${keyword}`
+      }
+    </script>
+  </th:block>
+</th:block>
+</html>
